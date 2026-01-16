@@ -1,0 +1,233 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ContentType {
+  POST
+  PAGE
+  README
+  CHANGELOG
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+enum RoleName {
+  ADMIN
+  EDITOR
+  AUTHOR
+  READER
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String?
+  name         String?
+  avatarUrl    String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+
+  roles         UserRole[]
+  oauthAccounts OAuthAccount[]
+  contents      Content[]
+  comments      Comment[]
+  likes         Like[]
+  viewEvents    ViewEvent[]
+  sessions      Session[]
+  loginAttempts LoginAttempt[]
+}
+
+model Role {
+  id   String   @id @default(uuid())
+  name RoleName @unique
+
+  users UserRole[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+}
+
+model OAuthAccount {
+  id         String @id @default(uuid())
+  provider   String
+  providerId String
+  userId     String
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([provider, providerId])
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  ipAddress String
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model LoginAttempt {
+  id        String   @id @default(uuid())
+  userId    String?
+  email     String?
+  ipAddress String
+  success   Boolean
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model Content {
+  id       String      @id @default(uuid())
+  type     ContentType
+  authorId String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  author   User                   @relation(fields: [authorId], references: [id])
+  versions ContentVersion[]
+  status   ContentStatusHistory[]
+  slugs    ContentSlug[]
+  tags     ContentTag[]
+  comments Comment[]
+  likes    Like[]
+  views    ViewEvent[]
+  seo      ContentSEO?
+}
+
+model ContentVersion {
+  id        String   @id @default(uuid())
+  contentId String
+  title     String
+  summary   String?
+  body      String // markdown
+  version   Int
+  createdAt DateTime @default(now())
+
+  content Content @relation(fields: [contentId], references: [id])
+
+  @@unique([contentId, version])
+}
+
+model ContentStatusHistory {
+  id          String        @id @default(uuid())
+  contentId   String
+  status      ContentStatus
+  effectiveAt DateTime
+  createdAt   DateTime      @default(now())
+
+  content Content @relation(fields: [contentId], references: [id])
+
+  @@index([contentId])
+}
+
+model ContentSlug {
+  id        String   @id @default(uuid())
+  contentId String
+  slug      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  content Content @relation(fields: [contentId], references: [id])
+
+  @@unique([slug])
+}
+
+model ContentSEO {
+  id              String  @id @default(uuid())
+  contentId       String  @unique
+  metaTitle       String?
+  metaDescription String?
+  canonicalUrl    String?
+
+  content Content @relation(fields: [contentId], references: [id])
+}
+
+model Tag {
+  id   String @id @default(uuid())
+  name String @unique
+
+  items ContentTag[]
+}
+
+model ContentTag {
+  contentId String
+  tagId     String
+
+  content Content @relation(fields: [contentId], references: [id])
+  tag     Tag     @relation(fields: [tagId], references: [id])
+
+  @@id([contentId, tagId])
+}
+
+model Comment {
+  id        String @id @default(uuid())
+  body      String
+  userId    String
+  contentId String
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user    User    @relation(fields: [userId], references: [id])
+  content Content @relation(fields: [contentId], references: [id])
+}
+
+model Like {
+  userId    String
+  contentId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  content Content @relation(fields: [contentId], references: [id])
+
+  @@id([userId, contentId])
+}
+
+model ViewEvent {
+  id        String   @id @default(uuid())
+  contentId String
+  userId    String?
+  sessionId String?
+  ipHash    String
+  userAgent String?
+  referrer  String?
+  createdAt DateTime @default(now())
+
+  content Content @relation(fields: [contentId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+
+  @@index([contentId])
+  @@index([createdAt])
+}
