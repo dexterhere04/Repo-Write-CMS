@@ -12,7 +12,7 @@ export class AuthService {
 
   async registerUser(name: string, email: string, password: string) {
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await this.prisma.client.user.create({
+    const user = await this.prisma.user.create({
       data: {
         name,
         email,
@@ -23,7 +23,7 @@ export class AuthService {
   }
 
   async validateUser(identifier: string, password: string) {
-    const user = await this.prisma.client.user.findFirst({
+    const user = await this.prisma.user.findFirst({
       where: {
         OR: [{ name: identifier }, { email: identifier }],
       },
@@ -59,7 +59,7 @@ export class AuthService {
     email?: string;
     avatarUrl?: string;
   }) {
-    let user = await this.prisma.client.user.findFirst({
+    let user = await this.prisma.user.findFirst({
       where: {
         oauthAccounts: {
           some: {
@@ -77,7 +77,7 @@ export class AuthService {
         );
       }
 
-      user = await this.prisma.client.user.create({
+      user = await this.prisma.user.create({
         data: {
           name: profile.username,
           email: profile.email,

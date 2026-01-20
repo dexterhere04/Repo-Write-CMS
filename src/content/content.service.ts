@@ -32,7 +32,7 @@ export class ContentService {
     let counter = 1;
 
     while (true) {
-      const existing = await this.prisma.client.contentSlug.findUnique({
+      const existing = await this.prisma.contentSlug.findUnique({
         where: { slug },
       });
 
@@ -46,7 +46,7 @@ export class ContentService {
   }
 
   private async getLatestVersion(contentId: string) {
-    const version = await this.prisma.client.contentVersion.findFirst({
+    const version = await this.prisma.contentVersion.findFirst({
       where: { contentId },
       orderBy: { version: 'desc' },
     });
@@ -59,7 +59,7 @@ export class ContentService {
   }
 
   private async getLatestStatus(contentId: string) {
-    return this.prisma.client.contentStatusHistory.findFirst({
+    return this.prisma.contentStatusHistory.findFirst({
       where: { contentId },
       orderBy: { effectiveAt: 'desc' },
     });
@@ -73,7 +73,7 @@ export class ContentService {
     const baseSlug = dto.slug ?? this.generateSlug(dto.title);
     const uniqueSlug = await this.ensureUniqueSlug(baseSlug);
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       const content = await tx.content.create({
         data: {
           type: dto.type,
@@ -132,7 +132,7 @@ export class ContentService {
     userId: string,
     dto: UpdateContentDto,
   ) {
-    const content = await this.prisma.client.content.findUnique({
+    const content = await this.prisma.content.findUnique({
       where: { id: contentId },
     });
 
@@ -146,7 +146,7 @@ export class ContentService {
 
     const latestVersion = await this.getLatestVersion(contentId);
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       if (dto.slug) {
         const baseSlug = this.generateSlug(dto.slug);
         const uniqueSlug = await this.ensureUniqueSlug(baseSlug);
@@ -203,7 +203,7 @@ export class ContentService {
   async setPublishState(contentId: string, dto: PublishContentDto) {
     const status = dto.publish ? ContentStatus.PUBLISHED : ContentStatus.DRAFT;
 
-    return this.prisma.client.contentStatusHistory.create({
+    return this.prisma.contentStatusHistory.create({
       data: {
         contentId,
         status,
@@ -217,7 +217,7 @@ export class ContentService {
   // ---------------------------------------------
 
   async setVisibility(contentId: string, dto: SetVisibilityDto) {
-    return this.prisma.client.content.update({
+    return this.prisma.content.update({
       where: { id: contentId },
       data: {
         visibility: dto.visibility,
@@ -230,7 +230,7 @@ export class ContentService {
   // ---------------------------------------------
 
   async softDelete(contentId: string, userId: string) {
-    const content = await this.prisma.client.content.findUnique({
+    const content = await this.prisma.content.findUnique({
       where: { id: contentId },
     });
 
@@ -242,7 +242,7 @@ export class ContentService {
       throw new ForbiddenException('Not your content');
     }
 
-    return this.prisma.client.content.update({
+    return this.prisma.content.update({
       where: { id: contentId },
       data: { deletedAt: new Date() },
     });
@@ -253,7 +253,7 @@ export class ContentService {
   // ---------------------------------------------
 
   async getPublicContentBySlug(slug: string) {
-    const contentSlug = await this.prisma.client.contentSlug.findUnique({
+    const contentSlug = await this.prisma.contentSlug.findUnique({
       where: { slug },
     });
 
@@ -261,7 +261,7 @@ export class ContentService {
       throw new NotFoundException('Content not found');
     }
 
-    const content = await this.prisma.client.content.findUnique({
+    const content = await this.prisma.content.findUnique({
       where: { id: contentSlug.contentId },
     });
 

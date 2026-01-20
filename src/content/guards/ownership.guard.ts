@@ -27,7 +27,7 @@ export class OwnershipGuard implements CanActivate {
       return true;
     }
 
-    const content = await this.prisma.client.content.findUnique({
+    const content = await this.prisma.content.findUnique({
       where: { id: contentId },
     });
 
