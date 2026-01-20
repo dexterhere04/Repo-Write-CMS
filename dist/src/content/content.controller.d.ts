@@ -8,11 +8,11 @@ export declare class ContentController {
     constructor(contentService: ContentService);
     createDraft(req: unknown, dto: CreateContentDto): Promise<{
         id: string;
-        type: import("@prisma/client").$Enums.ContentType;
-        visibility: import("@prisma/client").$Enums.Visibility;
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
+        type: import("@prisma/client").$Enums.ContentType;
+        visibility: import("@prisma/client").$Enums.Visibility;
         authorId: string;
     }>;
     updateContent(id: string, req: unknown, dto: UpdateContentDto): Promise<{
@@ -20,27 +20,27 @@ export declare class ContentController {
     }>;
     deleteContent(id: string, req: unknown): Promise<{
         id: string;
-        type: import("@prisma/client").$Enums.ContentType;
-        visibility: import("@prisma/client").$Enums.Visibility;
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
+        type: import("@prisma/client").$Enums.ContentType;
+        visibility: import("@prisma/client").$Enums.Visibility;
         authorId: string;
     }>;
     publishContent(id: string, dto: PublishContentDto): Promise<{
         id: string;
-        contentId: string;
         createdAt: Date;
+        contentId: string;
         status: import("@prisma/client").$Enums.ContentStatus;
         effectiveAt: Date;
     }>;
     setVisibility(id: string, dto: SetVisibilityDto): Promise<{
         id: string;
-        type: import("@prisma/client").$Enums.ContentType;
-        visibility: import("@prisma/client").$Enums.Visibility;
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
+        type: import("@prisma/client").$Enums.ContentType;
+        visibility: import("@prisma/client").$Enums.Visibility;
         authorId: string;
     }>;
     getBySlug(slug: string): Promise<{

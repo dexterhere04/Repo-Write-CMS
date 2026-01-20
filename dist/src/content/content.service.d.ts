@@ -12,11 +12,11 @@ export declare class ContentService {
     private getLatestStatus;
     createDraft(authorId: string, dto: CreateContentDto): Promise<{
         id: string;
-        type: import("@prisma/client").$Enums.ContentType;
-        visibility: import("@prisma/client").$Enums.Visibility;
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
+        type: import("@prisma/client").$Enums.ContentType;
+        visibility: import("@prisma/client").$Enums.Visibility;
         authorId: string;
     }>;
     updateContent(contentId: string, userId: string, dto: UpdateContentDto): Promise<{
@@ -24,27 +24,27 @@ export declare class ContentService {
     }>;
     setPublishState(contentId: string, dto: PublishContentDto): Promise<{
         id: string;
-        contentId: string;
         createdAt: Date;
+        contentId: string;
         status: import("@prisma/client").$Enums.ContentStatus;
         effectiveAt: Date;
     }>;
     setVisibility(contentId: string, dto: SetVisibilityDto): Promise<{
         id: string;
-        type: import("@prisma/client").$Enums.ContentType;
-        visibility: import("@prisma/client").$Enums.Visibility;
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
+        type: import("@prisma/client").$Enums.ContentType;
+        visibility: import("@prisma/client").$Enums.Visibility;
         authorId: string;
     }>;
     softDelete(contentId: string, userId: string): Promise<{
         id: string;
-        type: import("@prisma/client").$Enums.ContentType;
-        visibility: import("@prisma/client").$Enums.Visibility;
         createdAt: Date;
         updatedAt: Date;
         deletedAt: Date | null;
+        type: import("@prisma/client").$Enums.ContentType;
+        visibility: import("@prisma/client").$Enums.Visibility;
         authorId: string;
     }>;
     getPublicContentBySlug(slug: string): Promise<{
