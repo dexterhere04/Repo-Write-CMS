@@ -5,7 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Role } from '../enums/role.enum';
+import { Role } from '../../auth/enums/role.enum';
 
 @Injectable()
 export class OwnershipGuard implements CanActivate {
@@ -18,9 +18,6 @@ export class OwnershipGuard implements CanActivate {
     }>();
     const user = request.user;
     const contentId = request.params.id;
-    if (!user) {
-      throw new ForbiddenException('User not authenticated');
-    }
 
     if (!user) {
       throw new ForbiddenException('User not authenticated');

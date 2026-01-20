@@ -8,6 +8,7 @@ import { CreateContentDto } from './dto/create-content.dto';
 import { UpdateContentDto } from './dto/update-content.dto';
 import { PublishContentDto } from './dto/publish-content.dto';
 import { SetVisibilityDto } from './dto/set-visibility.dto';
+import { ContentStatus, Visibility } from '@prisma/client';
 import slugify from 'slugify';
 
 @Injectable()
@@ -19,24 +20,49 @@ export class ContentService {
   // ---------------------------------------------
 
   private generateSlug(title: string): string {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-    return slugify(title, { lower: true, strict: true });
+    const slug = slugify(title, { lower: true, strict: true });
+    if (!slug) {
+      throw new Error('Failed to generate slug');
+    }
+    return slug;
   }
 
   private async ensureUniqueSlug(baseSlug: string): Promise<string> {
     let slug = baseSlug;
     let counter = 1;
 
-    while (
-      await this.prisma.client.contentSlug.findUnique({
+    while (true) {
+      const existing = await this.prisma.client.contentSlug.findUnique({
         where: { slug },
-      })
-    ) {
+      });
+
+      if (!existing) break;
+
       slug = `${baseSlug}-${counter}`;
       counter++;
     }
 
     return slug;
+  }
+
+  private async getLatestVersion(contentId: string) {
+    const version = await this.prisma.client.contentVersion.findFirst({
+      where: { contentId },
+      orderBy: { version: 'desc' },
+    });
+
+    if (!version) {
+      throw new NotFoundException('No versions found');
+    }
+
+    return version;
+  }
+
+  private async getLatestStatus(contentId: string) {
+    return this.prisma.client.contentStatusHistory.findFirst({
+      where: { contentId },
+      orderBy: { effectiveAt: 'desc' },
+    });
   }
 
   // ---------------------------------------------
@@ -52,6 +78,7 @@ export class ContentService {
         data: {
           type: dto.type,
           authorId,
+          visibility: Visibility.PRIVATE,
         },
       });
 
@@ -87,7 +114,7 @@ export class ContentService {
       await tx.contentStatusHistory.create({
         data: {
           contentId: content.id,
-          status: 'DRAFT',
+          status: ContentStatus.DRAFT,
           effectiveAt: new Date(),
         },
       });
@@ -107,7 +134,6 @@ export class ContentService {
   ) {
     const content = await this.prisma.client.content.findUnique({
       where: { id: contentId },
-      include: { versions: true },
     });
 
     if (!content || content.deletedAt) {
@@ -118,11 +144,12 @@ export class ContentService {
       throw new ForbiddenException('Not your content');
     }
 
-    const latestVersion = Math.max(...content.versions.map((v) => v.version));
+    const latestVersion = await this.getLatestVersion(contentId);
 
     return this.prisma.client.$transaction(async (tx) => {
       if (dto.slug) {
-        const uniqueSlug = await this.ensureUniqueSlug(dto.slug);
+        const baseSlug = this.generateSlug(dto.slug);
+        const uniqueSlug = await this.ensureUniqueSlug(baseSlug);
 
         await tx.contentSlug.updateMany({
           where: { contentId, isActive: true },
@@ -141,10 +168,10 @@ export class ContentService {
       await tx.contentVersion.create({
         data: {
           contentId,
-          title: dto.title ?? content.versions[0].title,
-          summary: dto.summary,
-          body: dto.body ?? content.versions[0].body,
-          version: latestVersion + 1,
+          title: dto.title ?? latestVersion.title,
+          summary: dto.summary ?? latestVersion.summary,
+          body: dto.body ?? latestVersion.body,
+          version: latestVersion.version + 1,
         },
       });
 
@@ -174,7 +201,7 @@ export class ContentService {
   // ---------------------------------------------
 
   async setPublishState(contentId: string, dto: PublishContentDto) {
-    const status = dto.publish ? 'PUBLISHED' : 'DRAFT';
+    const status = dto.publish ? ContentStatus.PUBLISHED : ContentStatus.DRAFT;
 
     return this.prisma.client.contentStatusHistory.create({
       data: {
@@ -227,41 +254,32 @@ export class ContentService {
 
   async getPublicContentBySlug(slug: string) {
     const contentSlug = await this.prisma.client.contentSlug.findUnique({
-      where: { slug, isActive: true },
+      where: { slug },
     });
 
-    if (!contentSlug) {
+    if (!contentSlug || !contentSlug.isActive) {
       throw new NotFoundException('Content not found');
     }
 
     const content = await this.prisma.client.content.findUnique({
       where: { id: contentSlug.contentId },
-      include: { versions: true },
     });
 
     if (!content || content.deletedAt) {
       throw new NotFoundException('Content not found');
     }
 
-    // Check if content is published
-    const latestStatus =
-      await this.prisma.client.contentStatusHistory.findFirst({
-        where: { contentId: content.id },
-        orderBy: { effectiveAt: 'desc' },
-      });
+    const latestStatus = await this.getLatestStatus(content.id);
 
-    if (latestStatus?.status !== 'PUBLISHED') {
+    if (!latestStatus || latestStatus.status !== ContentStatus.PUBLISHED) {
       throw new NotFoundException('Content not found');
     }
 
-    // Check if content is public
-    if (content.visibility !== 'PUBLIC') {
+    if (content.visibility !== Visibility.PUBLIC) {
       throw new NotFoundException('Content not found');
     }
 
-    const latestVersion = content.versions.reduce((prev, current) =>
-      prev.version > current.version ? prev : current,
-    );
+    const latestVersion = await this.getLatestVersion(content.id);
 
     return {
       id: content.id,
@@ -269,7 +287,7 @@ export class ContentService {
       title: latestVersion.title,
       summary: latestVersion.summary,
       body: latestVersion.body,
-      slug: slug,
+      slug,
       createdAt: content.createdAt,
       updatedAt: content.updatedAt,
     };
