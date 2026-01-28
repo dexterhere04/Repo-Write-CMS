@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
@@ -68,20 +69,9 @@ describe('AuthController', () => {
       await expect(authController.register(registerDto)).rejects.toThrow(error);
     });
 
-    it('should validate required fields', async () => {
-      const invalidDto = {
-        name: '',
-        email: 'invalid-email',
-        password: '123',
-      } as RegisterDto;
-
+    it('should validate required fields', () => {
       // Validation is handled by class-validator automatically
       // This test ensures the method exists and can be called
-      jest
-        .spyOn(authService, 'registerUser')
-        .mockResolvedValue(mockAuthResponse);
-
-      // In a real scenario, validation would fail before reaching service
       expect(typeof authController.register).toBe('function');
     });
   });

@@ -29,8 +29,22 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
     async validate(payload) {
         const user = await this.prisma.user.findUnique({
             where: { id: payload.sub },
+            include: {
+                roles: {
+                    include: {
+                        role: true,
+                    },
+                },
+            },
         });
-        return user || null;
+        if (!user) {
+            return null;
+        }
+        const transformedUser = {
+            ...user,
+            role: user.roles.length > 0 ? user.roles[0].role.name : 'READER',
+        };
+        return transformedUser;
     }
 };
 exports.JwtStrategy = JwtStrategy;

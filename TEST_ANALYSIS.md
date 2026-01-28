@@ -1,53 +1,68 @@
 # Test Analysis Report: Repo-Write-CMS
 
 ## Summary
-Your test suite has **good structure and follows NestJS conventions**, but there are **critical gaps** that need attention. The test files lack service-layer tests and need improvements in mock strategies and coverage.
 
----
+Your test suite has **good structure and follows NestJS conventions**, but there are **critical gaps** that need attention. The test files lack service-layer tests and need improvements in mock strategies and coverage.
 
 ## File Structure Assessment
 
-### ✅ **Standard Compliance**
+### Standard Compliance
+
 Your test file structure **follows NestJS best practices**:
 
-```
+```text
 src/
 ├── module/
-│   ├── module.controller.spec.ts  ✅ Controller tests
-│   └── module.service.ts         ⚠️ MISSING: service.spec.ts
+│   ├── module.controller.spec.ts  Controller tests
+│   └── module.service.ts         MISSING: service.spec.ts
 ```
 
 - **Convention**: `.spec.ts` suffix is correct
 - **Location**: Tests live alongside source files (standard for NestJS)
 - **Organization**: Logical grouping by module (auth, content, prisma)
 
-### ⚠️ **Missing Test Files**
+### Missing Test Files
+
 Critical gap: **No service-layer tests exist**
 
-| Module | Controller Tests | Service Tests | Status |
-|--------|-----------------|---------------|--------|
-| Auth | ✅ `auth.controller.spec.ts` | ❌ MISSING | 50% coverage |
-| Content | ✅ `content.controller.spec.ts` | ❌ MISSING | 50% coverage |
-| Prisma | ❌ MISSING | ⚠️ `prisma.service.spec.ts` (weak) | Very weak |
-| App | ✅ `app.controller.spec.ts` | ✅ N/A | Basic only |
+| Module  | Controller Tests             | Service Tests                   | Status       |
+| ------- | ---------------------------- | ------------------------------- | ------------ |
+| Auth    | `auth.controller.spec.ts`    | MISSING                         | 50% coverage |
+| Content | `content.controller.spec.ts` | MISSING                         | 50% coverage |
+| Prisma  | MISSING                      | `prisma.service.spec.ts` (weak) | Very weak    |
+| App     | `app.controller.spec.ts`     | N/A                             | Basic only   |
+
+### Missing Test Files
+
+Critical gap: **No service-layer tests exist**
+
+| Module  | Controller Tests             | Service Tests                   | Status       |
+| ------- | ---------------------------- | ------------------------------- | ------------ |
+| Auth    | `auth.controller.spec.ts`    | MISSING                         | 50% coverage |
+| Content | `content.controller.spec.ts` | MISSING                         | 50% coverage |
+| Prisma  | MISSING                      | `prisma.service.spec.ts` (weak) | Very weak    |
+| App     | `app.controller.spec.ts`     | N/A                             | Basic only   |
 
 ---
 
 ## Detailed Analysis by Test File
 
-### 1. **`app.controller.spec.ts`** ✅ Good
+### 1. `app.controller.spec.ts` - Good
 
 **Strengths:**
+
 - Clean setup with `TestingModule`
 - Tests both endpoints (root, health check)
 - Proper spy usage and mocking
 
 **Issues:**
-- ⚠️ Tests redundantly verify return values twice
-- ⚠️ No error scenarios tested
-- ⚠️ `AppService` isn't real (should be)
+
+- Tests redundantly verify return values twice
+- No error scenarios tested
+- `AppService` isn't real (should be)
 
 **Example Issue:**
+
 ```typescript
 // Line 25-26: Redundant tests
 it('should return healthy status', () => {
@@ -64,17 +79,19 @@ it('should return status as string', () => {
 
 ---
 
-### 2. **`auth.controller.spec.ts`** ⚠️ Mixed Issues
+### 2. `auth.controller.spec.ts` - Mixed Issues
 
 **Strengths:**
+
 - Good error handling tests (invalid credentials, non-existent user)
 - Tests multiple OAuth scenarios (existing user, new user)
 - Proper mock setup with `useValue`
 - Covers main flows: register, login, GitHub OAuth
 
 **Issues:**
-- ❌ **MISSING**: `AuthService` tests entirely (critical gap)
-- ⚠️ Line 71: "Validate required fields" test is weak
+
+- **MISSING**: `AuthService` tests entirely (critical gap)
+- Line 71: "Validate required fields" test is weak
   - Claims to test validation but only checks method existence
   - DTO validation is **never actually tested** against invalid inputs
   - Comment says "validation is handled by class-validator automatically" but doesn't verify it
@@ -93,66 +110,67 @@ it('should validate required fields', async () => {
 });
 ```
 
-- ⚠️ No test for password strength validation
-- ⚠️ No test for email format validation
-- ⚠️ No JWT token validation tests
-- ⚠️ GitHub strategy configuration untested
+- No test for password strength validation
+- No test for email format validation
+- No JWT token validation tests
+- GitHub strategy configuration untested
 
 ---
 
-### 3. **`content.controller.spec.ts`** ⚠️ Mixed Issues
+### 3. `content.controller.spec.ts` - Mixed Issues
 
 **Strengths:**
+
 - Comprehensive endpoint coverage (draft, update, delete, publish, visibility)
 - Good test organization with nested describe blocks
 - Tests multiple scenarios per endpoint
 - Proper error handling tests
 
 **Issues:**
-- ❌ **MISSING**: `ContentService` tests entirely (critical gap)
-- ⚠️ **Missing core business logic tests**:
-  - ❌ Versioning logic (createDraft increments version)
-  - ❌ Slug generation/uniqueness (contentSlug creation)
-  - ❌ Status history tracking (contentStatusHistory creation)
-  - ❌ Ownership validation (why OwnershipGuard protects routes)
-  - ❌ Transaction handling (atomic content creation)
-  - ❌ Visibility state transitions
-  - ❌ Content deletion (soft delete with `deletedAt`)
 
-- ⚠️ Mock doesn't reflect real service return types
+- **MISSING**: `ContentService` tests entirely (critical gap)
+- **Missing core business logic tests**:
+  - Versioning logic (createDraft increments version)
+  - Slug generation/uniqueness (contentSlug creation)
+  - Status history tracking (contentStatusHistory creation)
+  - Ownership validation (why OwnershipGuard protects routes)
+  - Transaction handling (atomic content creation)
+  - Visibility state transitions
+  - Content deletion (soft delete with `deletedAt`)
+
+---
+
+- Mock doesn't reflect real service return types
   - `mockStatusHistory` type needs alignment
   - Real methods return `Promise<any>`, not specific DTOs
 
-- ⚠️ No guard testing
+- No guard testing
   - `@UseGuards(JwtAuthGuard, OwnershipGuard)` never tested
   - What happens when user isn't owner?
   - What happens when user isn't authenticated?
 
 ---
 
-### 4. **`prisma.service.spec.ts`** ❌ Weak
+### 4. `prisma.service.spec.ts` - Weak
 
 **Issues:**
-- ⚠️ Only tests that service is "defined"
-- ⚠️ Mocks the service with empty object `{}`
-- ⚠️ Zero functionality tested
-- ⚠️ Lifecycle hooks (`onModuleInit`, `onModuleDestroy`) never tested
 
-```typescript
+- Only tests that service is "defined"
+- Mocks the service with empty object `{}`
+- Zero functionality tested
+- Lifecycle hooks (`onModuleInit`, `onModuleDestroy`) never tested
+
+````typescript
 // This test is USELESS
 it('should be defined', () => {
   expect(service).toBeDefined(); // Service is mocked as {}, so this passes meaninglessly
 });
-```
-
 **What should be tested:**
 - Database connection on `onModuleInit()`
 - Proper disconnection on `onModuleDestroy()`
 - Prisma client functionality
 
----
-
-### 5. **`app.e2e-spec.ts`** ⚠️ Basic
+### 5. `app.e2e-spec.ts` - Basic
 
 **Strengths:**
 - Correct e2e test setup with `INestApplication`
@@ -160,10 +178,10 @@ it('should be defined', () => {
 - Uses `supertest` correctly
 
 **Issues:**
-- ⚠️ Only tests root endpoint
-- ⚠️ No auth flow tests (register → login → protected routes)
-- ⚠️ No content creation flow tests
-- ⚠️ Database mocked, defeating purpose of e2e testing
+- Only tests root endpoint
+- No auth flow tests (register → login → protected routes)
+- No content creation flow tests
+- Database mocked, defeating purpose of e2e testing
   - Should use real test database (see instructions)
   - Or use `@nestjs/testing` database utilities
 
@@ -171,33 +189,32 @@ it('should be defined', () => {
 
 ## Critical Issues Summary
 
-### 🔴 **Missing Tests (High Priority)**
+| Area                        | Status           | Impact                                                             |
+|-----------------------------|------------------|-------------------------------------------------------------------|
+| Service layer (Auth)        | Missing          | `registerUser()`, `loginUser()`, `handleGithubLogin()` untested   |
+| Service layer (Content)     | Missing          | Core business logic untested: versioning, slug generation, status tracking |
+| Service layer (Prisma)      | Weak             | Only checks if defined                                             |
+| Input validation            | Weak             | DTO validation never triggered in tests                            |
+| Guards                      | Missing          | Authorization logic (`OwnershipGuard`) never tested               |
+| Transactions                | Missing          | Critical pattern: atomic operations not tested                     |
+| Error handling              | Partial          | Some paths covered, but not systematically                         |
+| Database operations         | Missing          | No real database queries tested                                   |
 
-| Area | Status | Impact |
-|------|--------|--------|
-| Service layer (Auth) | ❌ Missing | `registerUser()`, `loginUser()`, `handleGithubLogin()` untested |
-| Service layer (Content) | ❌ Missing | Core business logic untested: versioning, slug generation, status tracking |
-| Service layer (Prisma) | ❌ Weak | Only checks if defined |
-| Input validation | ⚠️ Weak | DTO validation never triggered in tests |
-| Guards | ❌ Missing | Authorization logic (`OwnershipGuard`) never tested |
-| Transactions | ❌ Missing | Critical pattern: atomic operations not tested |
-| Error handling | ⚠️ Partial | Some paths covered, but not systematically |
-| Database operations | ❌ Missing | No real database queries tested |
-
-### 🟡 **Test Quality Issues**
+### Test Quality Issues
 
 1. **Over-mocking**: Everything is mocked, removing value of tests
    - Services should be real (or lightly mocked) in unit tests
    - Controllers should be tested with mocked services
 
 2. **Weak input validation testing**:
+
    ```typescript
    // WRONG: Using 'as' defeats validation
    const invalidDto = { ... } as RegisterDto;
-   
+
    // RIGHT: Should let validation run
    await expect(controller.register(invalidDto)).rejects.toThrow();
-   ```
+````
 
 3. **No transaction testing**:
    - According to guidelines, content operations must use Prisma transactions
@@ -212,15 +229,17 @@ it('should be defined', () => {
 
 ## Best Practices Not Followed
 
-### ❌ **Missing Service Tests**
+### Missing Service Tests
+
 According to your `AGENTS.md`:
+
 > "Core Framework... Transactions are required for multi-step content operations"
 > "Test database operations using transactions to avoid state pollution"
 
 Yet **zero transaction tests exist**.
 
-### ❌ **No Integration Tests**
 E2E test mocks database instead of testing real flow:
+
 ```typescript
 // CURRENT (weak)
 .overrideProvider(PrismaService)
@@ -230,8 +249,10 @@ E2E test mocks database instead of testing real flow:
 // Use test database from .env.test
 ```
 
-### ❌ **Redundant Controller Tests**
+### Redundant Controller Tests
+
 Example from `app.controller.spec.ts`:
+
 ```typescript
 // Lines 25-32: Both test same thing
 it('should return healthy status', () => {
@@ -247,9 +268,14 @@ it('should return status as string', () => {
 
 ## Recommended Improvements Priority
 
-### 1️⃣ **CRITICAL** - Add Service Layer Tests
+---
+
+### 1. CRITICAL - Add Service Layer Tests
 
 **File**: `src/auth/auth.service.spec.ts` (new)
+
+**File**: `src/auth/auth.service.spec.ts` (new)
+
 ```typescript
 describe('AuthService', () => {
   let service: AuthService;
@@ -278,6 +304,7 @@ describe('AuthService', () => {
 ```
 
 **File**: `src/content/content.service.spec.ts` (new)
+
 ```typescript
 describe('ContentService', () => {
   describe('createDraft', () => {
@@ -295,7 +322,7 @@ describe('ContentService', () => {
 });
 ```
 
-### 2️⃣ **HIGH** - Test Guards
+### 2. HIGH - Test Guards
 
 ```typescript
 describe('OwnershipGuard', () => {
@@ -305,7 +332,7 @@ describe('OwnershipGuard', () => {
 });
 ```
 
-### 3️⃣ **MEDIUM** - Fix Input Validation Tests
+### 3. MEDIUM - Fix Input Validation Tests
 
 ```typescript
 // Remove 'as' type casting
@@ -315,13 +342,12 @@ it('should reject invalid email', async () => {
     name: 'Test',
     email: 'invalid-email', // Will fail @IsEmail()
     password: 'short'        // Will fail @MinLength(8)
-  };
-  
+
   await expect(controller.register(dto)).rejects.toThrow(BadRequestException);
 });
 ```
 
-### 4️⃣ **MEDIUM** - Improve E2E Tests
+### 4. MEDIUM - Improve E2E Tests
 
 ```typescript
 // Add auth flow test
@@ -335,7 +361,7 @@ it('should complete full auth → create content → publish flow', async () => 
 });
 ```
 
-### 5️⃣ **LOW** - Remove Redundant Tests
+### 5. LOW - Remove Redundant Tests
 
 Consolidate duplicate assertions in `app.controller.spec.ts`
 
@@ -343,30 +369,29 @@ Consolidate duplicate assertions in `app.controller.spec.ts`
 
 ## Compliance Checklist
 
-| Requirement | Status | Notes |
-|-------------|--------|-------|
-| Tests in same folder as source | ✅ Yes | Standard location |
-| `.spec.ts` naming convention | ✅ Yes | Correct |
-| `TestingModule` setup | ✅ Yes | Proper NestJS pattern |
-| Mock strategy | ⚠️ Over-mocked | Too much mocking reduces test value |
-| Service tests exist | ❌ No | Critical gap |
-| Integration tests | ⚠️ Weak | Database mocked |
-| Guard tests | ❌ No | Authorization untested |
-| Error scenarios | ⚠️ Partial | Missing systematic coverage |
-| Transaction testing | ❌ No | Critical pattern untested |
-| Input validation | ⚠️ Weak | Type casting defeats validation |
-
----
+| Requirement                    | Status      | Notes                               |
+| ------------------------------ | ----------- | ----------------------------------- |
+| Tests in same folder as source | Yes         | Standard location                   |
+| `.spec.ts` naming convention   | Yes         | Correct                             |
+| `TestingModule` setup          | Yes         | Proper NestJS pattern               |
+| Mock strategy                  | Over-mocked | Too much mocking reduces test value |
+| Service tests exist            | No          | Critical gap                        |
+| Integration tests              | Weak        | Database mocked                     |
+| Guard tests                    | No          | Authorization untested              |
+| Error scenarios                | Partial     | Missing systematic coverage         |
+| Transaction testing            | No          | Critical pattern untested           |
+| Input validation               | Weak        | Type casting defeats validation     |
 
 ## Conclusion
 
 **Overall**: 5/10 - Good structure, but **critical testing gaps**
 
 **Immediate Actions**:
-1. ❌ Create `auth.service.spec.ts` with core logic tests
-2. ❌ Create `content.service.spec.ts` with transaction and versioning tests
-3. ❌ Add guard tests for authorization
-4. ⚠️ Fix input validation test pattern (remove `as RegisterDto` forcing)
-5. ✅ Keep current controller tests as-is (they're decent as integration points)
+
+1. Create `auth.service.spec.ts` with core logic tests
+2. Create `content.service.spec.ts` with transaction and versioning tests
+3. Add guard tests for authorization
+4. Fix input validation test pattern (remove `as RegisterDto` forcing)
+5. Keep current controller tests as-is (they're decent as integration points)
 
 The test framework and patterns are correct; you need **deeper testing** of business logic and database operations.
