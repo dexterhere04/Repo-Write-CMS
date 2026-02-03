@@ -64,4 +64,16 @@ export class ContentController {
   getBySlug(@Param('slug') slug: string) {
     return this.contentService.getPublicContentBySlug(slug);
   }
+
+  @Get('public')
+  getPublicContent() {
+    return this.contentService.getPublicContent();
+  }
+
+  @Get('mine')
+  @UseGuards(JwtAuthGuard)
+  getMyContent(@Req() req: unknown) {
+    const user = getAuthUser(req);
+    return this.contentService.getUserContent(user.id);
+  }
 }

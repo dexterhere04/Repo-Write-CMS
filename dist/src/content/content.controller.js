@@ -48,6 +48,13 @@ let ContentController = class ContentController {
     getBySlug(slug) {
         return this.contentService.getPublicContentBySlug(slug);
     }
+    getPublicContent() {
+        return this.contentService.getPublicContent();
+    }
+    getMyContent(req) {
+        const user = (0, get_auth_user_1.getAuthUser)(req);
+        return this.contentService.getUserContent(user.id);
+    }
 };
 exports.ContentController = ContentController;
 __decorate([
@@ -103,6 +110,20 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ContentController.prototype, "getBySlug", null);
+__decorate([
+    (0, common_1.Get)('public'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "getPublicContent", null);
+__decorate([
+    (0, common_1.Get)('mine'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "getMyContent", null);
 exports.ContentController = ContentController = __decorate([
     (0, common_1.Controller)('content'),
     __metadata("design:paramtypes", [content_service_1.ContentService])

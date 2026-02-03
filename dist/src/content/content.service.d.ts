@@ -57,4 +57,28 @@ export declare class ContentService {
         createdAt: Date;
         updatedAt: Date;
     }>;
+    getPublicContent(): Promise<{
+        id: string;
+        title: string;
+        summary: string | null;
+        slug: string;
+        coverImageUrl: null;
+        author: {
+            name: string | null;
+        };
+        visibility: import("@prisma/client").$Enums.Visibility;
+        createdAt: Date;
+        tags: never[];
+    }[]>;
+    getUserContent(userId: string): Promise<{
+        id: string;
+        title: string;
+        summary: string | null;
+        slug: string;
+        visibility: import("@prisma/client").$Enums.Visibility;
+        type: import("@prisma/client").$Enums.ContentType;
+        status: import("@prisma/client").$Enums.ContentStatus;
+        createdAt: Date;
+        updatedAt: Date;
+    }[]>;
 }

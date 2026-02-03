@@ -226,6 +226,86 @@ let ContentService = class ContentService {
             updatedAt: content.updatedAt,
         };
     }
+    async getPublicContent() {
+        const contents = await this.prisma.content.findMany({
+            where: {
+                deletedAt: null,
+                visibility: client_1.Visibility.PUBLIC,
+            },
+            include: {
+                slugs: {
+                    where: { isActive: true },
+                    select: { slug: true },
+                },
+                versions: {
+                    orderBy: { version: 'desc' },
+                    take: 1,
+                    select: { title: true, summary: true },
+                },
+                status: {
+                    orderBy: { effectiveAt: 'desc' },
+                    take: 1,
+                    select: { status: true },
+                },
+                author: {
+                    select: { name: true },
+                },
+                seo: {
+                    select: { metaTitle: true, metaDescription: true, canonicalUrl: true },
+                },
+            },
+        });
+        return contents
+            .filter(content => content.status.length > 0 &&
+            content.status[0].status === client_1.ContentStatus.PUBLISHED)
+            .map(content => ({
+            id: content.id,
+            title: content.versions[0].title,
+            summary: content.versions[0].summary,
+            slug: content.slugs[0].slug,
+            coverImageUrl: null,
+            author: content.author,
+            visibility: content.visibility,
+            createdAt: content.createdAt,
+            tags: [],
+        }));
+    }
+    async getUserContent(userId) {
+        const contents = await this.prisma.content.findMany({
+            where: {
+                deletedAt: null,
+                authorId: userId,
+            },
+            include: {
+                slugs: {
+                    where: { isActive: true },
+                    select: { slug: true },
+                },
+                versions: {
+                    orderBy: { version: 'desc' },
+                    take: 1,
+                    select: { title: true, summary: true },
+                },
+                status: {
+                    orderBy: { effectiveAt: 'desc' },
+                    take: 1,
+                    select: { status: true },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+        return contents.map(content => ({
+            id: content.id,
+            title: content.versions[0].title,
+            summary: content.versions[0].summary,
+            slug: content.slugs[0].slug,
+            visibility: content.visibility,
+            type: content.type,
+            status: content.status[0].status,
+            createdAt: content.createdAt,
+            updatedAt: content.updatedAt,
+        }));
+    }
 };
 exports.ContentService = ContentService;
 exports.ContentService = ContentService = __decorate([
