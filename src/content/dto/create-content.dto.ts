@@ -7,7 +7,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ContentType } from '../../../generated/prisma/enums';
+import { ContentType } from '@prisma/client';
 
 /**
  * DTO for creating new content (always created as DRAFT)

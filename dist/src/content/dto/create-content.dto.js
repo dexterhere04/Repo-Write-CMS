@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CreateContentDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
-const enums_1 = require("../../../generated/prisma/enums");
+const client_1 = require("@prisma/client");
 class CreateContentDto {
     title;
     summary;
@@ -52,8 +52,8 @@ __decorate([
     __metadata("design:type", String)
 ], CreateContentDto.prototype, "slug", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ enum: enums_1.ContentType }),
-    (0, class_validator_1.IsEnum)(enums_1.ContentType),
+    (0, swagger_1.ApiProperty)({ enum: client_1.ContentType }),
+    (0, class_validator_1.IsEnum)(client_1.ContentType),
     __metadata("design:type", String)
 ], CreateContentDto.prototype, "type", void 0);
 __decorate([

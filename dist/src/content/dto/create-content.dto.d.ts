@@ -1,4 +1,4 @@
-import { ContentType } from '../../../generated/prisma/enums';
+import { ContentType } from '@prisma/client';
 export declare class CreateContentDto {
     title: string;
     summary?: string;
