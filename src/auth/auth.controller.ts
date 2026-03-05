@@ -1,4 +1,13 @@
-import { Controller, Post, Body, Get, Req, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -16,6 +25,9 @@ interface GitHubRequest {
 
 @Controller('auth')
 export class AuthController {
+  private readonly frontendUrl =
+    process.env.FRONTEND_URL || 'http://localhost:3001';
+
   constructor(private authService: AuthService) {}
 
   @Post('register')
@@ -36,7 +48,16 @@ export class AuthController {
 
   @Get('github/callback')
   @UseGuards(AuthGuard('github'))
-  githubCallback(@Req() req: GitHubRequest) {
-    return this.authService.handleGithubLogin(req.user);
+  async githubCallback(@Req() req: GitHubRequest, @Res() res: Response) {
+    try {
+      const result = await this.authService.handleGithubLogin(req.user);
+      const redirectUrl = `${this.frontendUrl}/auth/callback?token=${encodeURIComponent(result.accessToken)}`;
+      return res.redirect(redirectUrl);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Authentication failed';
+      const redirectUrl = `${this.frontendUrl}/auth/callback?error=${encodeURIComponent(errorMessage)}`;
+      return res.redirect(redirectUrl);
+    }
   }
 }
