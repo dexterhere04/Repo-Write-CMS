@@ -58,39 +58,72 @@ export class AuthService {
     username: string;
     email?: string;
     avatarUrl?: string;
+    accessToken?: string;
   }) {
-    let user = await this.prisma.user.findFirst({
+    const existingAccount = await this.prisma.oAuthAccount.findUnique({
       where: {
+        provider_providerId: {
+          provider: 'github',
+          providerId: profile.githubId,
+        },
+      },
+      include: { user: true },
+    });
+
+    if (existingAccount) {
+      await this.prisma.oAuthAccount.update({
+        where: { id: existingAccount.id },
+        data: { accessToken: profile.accessToken },
+      });
+      return {
+        ...this.createJWT(existingAccount.user.id),
+        isGithubUser: true,
+      };
+    }
+
+    if (!profile.email) {
+      throw new UnauthorizedException(
+        'Email is required for GitHub registration',
+      );
+    }
+
+    const user = await this.prisma.user.create({
+      data: {
+        name: profile.username,
+        email: profile.email,
+        avatarUrl: profile.avatarUrl,
         oauthAccounts: {
-          some: {
+          create: {
             provider: 'github',
             providerId: profile.githubId,
+            accessToken: profile.accessToken,
           },
         },
       },
     });
+    return {
+      ...this.createJWT(user.id),
+      isGithubUser: true,
+    };
+  }
 
-    if (!user) {
-      if (!profile.email) {
-        throw new UnauthorizedException(
-          'Email is required for GitHub registration',
-        );
-      }
+  async getUserGithubToken(userId: string): Promise<string | null> {
+    const account = await this.prisma.oAuthAccount.findFirst({
+      where: {
+        userId,
+        provider: 'github',
+      },
+    });
+    return account?.accessToken ?? null;
+  }
 
-      user = await this.prisma.user.create({
-        data: {
-          name: profile.username,
-          email: profile.email,
-          avatarUrl: profile.avatarUrl,
-          oauthAccounts: {
-            create: {
-              provider: 'github',
-              providerId: profile.githubId,
-            },
-          },
-        },
-      });
-    }
-    return this.createJWT(user.id);
+  async isUserGithubUser(userId: string): Promise<boolean> {
+    const account = await this.prisma.oAuthAccount.findFirst({
+      where: {
+        userId,
+        provider: 'github',
+      },
+    });
+    return !!account;
   }
 }

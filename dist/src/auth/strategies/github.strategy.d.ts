@@ -1,16 +1,15 @@
-import { Strategy } from 'passport-github2';
+import { Strategy, Profile } from 'passport-github2';
 declare const GithubStrategy_base: new (...args: [options: import("passport-github2").StrategyOptionsWithRequest] | [options: import("passport-github2").StrategyOptions]) => Strategy & {
     validate(...args: any[]): unknown;
 };
 export declare class GithubStrategy extends GithubStrategy_base {
     constructor();
-    validate(accessToken: string, refreshToken: string, profile: {
-        id: string;
-        username: string;
-    }): {
+    validate(accessToken: string, refreshToken: string, profile: Profile): Promise<{
         githubId: string;
-        username: string;
+        username: string | undefined;
+        email: string | undefined;
+        avatarUrl: string | undefined;
         accessToken: string;
-    };
+    }>;
 }
 export {};

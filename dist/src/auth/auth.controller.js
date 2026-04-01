@@ -20,6 +20,7 @@ const login_dto_1 = require("./dto/login.dto");
 const register_dto_1 = require("./dto/register.dto");
 let AuthController = class AuthController {
     authService;
+    frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001';
     constructor(authService) {
         this.authService = authService;
     }
@@ -31,8 +32,17 @@ let AuthController = class AuthController {
     }
     githubLogin() {
     }
-    githubCallback(req) {
-        return this.authService.handleGithubLogin(req.user);
+    async githubCallback(req, res) {
+        try {
+            const result = await this.authService.handleGithubLogin(req.user);
+            const redirectUrl = `${this.frontendUrl}/auth/callback?token=${encodeURIComponent(result.accessToken)}&isGithubUser=true`;
+            return res.redirect(redirectUrl);
+        }
+        catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
+            const redirectUrl = `${this.frontendUrl}/auth/callback?error=${encodeURIComponent(errorMessage)}`;
+            return res.redirect(redirectUrl);
+        }
     }
 };
 exports.AuthController = AuthController;
@@ -61,9 +71,10 @@ __decorate([
     (0, common_1.Get)('github/callback'),
     (0, common_1.UseGuards)((0, passport_1.AuthGuard)('github')),
     __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Res)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:returntype", Promise)
 ], AuthController.prototype, "githubCallback", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),

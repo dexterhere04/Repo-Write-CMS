@@ -20,12 +20,35 @@ let GithubStrategy = class GithubStrategy extends (0, passport_1.PassportStrateg
             clientSecret: process.env.GITHUB_CLIENT_SECRET || 'mock-client-secret',
             callbackURL: process.env.GITHUB_CALLBACK_URL ||
                 'http://localhost:3000/auth/github/callback',
+            scope: ['user:email'],
         });
     }
-    validate(accessToken, refreshToken, profile) {
+    async validate(accessToken, refreshToken, profile) {
+        let email = profile.emails?.[0]?.value;
+        if (!email) {
+            try {
+                const response = await fetch('https://api.github.com/user/emails', {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        Accept: 'application/vnd.github+json',
+                        'User-Agent': 'Repo-Write-CMS',
+                    },
+                });
+                if (response.ok) {
+                    const emails = (await response.json());
+                    const primaryEmail = emails.find((e) => e.primary && e.verified);
+                    email = primaryEmail?.email || emails[0]?.email;
+                }
+            }
+            catch {
+            }
+        }
+        const avatarUrl = profile.photos?.[0]?.value;
         return {
             githubId: profile.id,
             username: profile.username,
+            email,
+            avatarUrl,
             accessToken,
         };
     }

@@ -197,18 +197,95 @@ export class ContentService {
   }
 
   // ---------------------------------------------
+  // Get Single Content by ID
+  // ---------------------------------------------
+
+  async findOne(contentId: string, userId: string) {
+    const content = await this.prisma.content.findUnique({
+      where: { id: contentId },
+      include: {
+        slugs: {
+          where: { isActive: true },
+          select: { slug: true },
+        },
+        versions: {
+          orderBy: { version: 'desc' },
+          take: 1,
+        },
+        seo: true,
+        status: {
+          orderBy: { effectiveAt: 'desc' },
+          take: 1,
+        },
+        author: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    if (!content || content.deletedAt) {
+      throw new NotFoundException('Content not found');
+    }
+
+    if (content.authorId !== userId) {
+      throw new ForbiddenException('Not your content');
+    }
+
+    const latestVersion = content.versions[0];
+    const latestStatus = content.status[0];
+    const activeSlug = content.slugs[0];
+
+    return {
+      id: content.id,
+      title: latestVersion?.title ?? '',
+      summary: latestVersion?.summary,
+      body: latestVersion?.body ?? '',
+      slug: activeSlug?.slug ?? '',
+      type: content.type,
+      visibility: content.visibility,
+      status: latestStatus?.status ?? ContentStatus.DRAFT,
+      author: content.author,
+      createdAt: content.createdAt,
+      updatedAt: content.updatedAt,
+      seo: content.seo
+        ? {
+            seoTitle: content.seo.metaTitle,
+            seoDescription: content.seo.metaDescription,
+            canonicalUrl: content.seo.canonicalUrl,
+          }
+        : null,
+    };
+  }
+
+  // ---------------------------------------------
   // Publish / Unpublish
   // ---------------------------------------------
 
   async setPublishState(contentId: string, dto: PublishContentDto) {
-    const status = dto.publish ? ContentStatus.PUBLISHED : ContentStatus.DRAFT;
+    const content = await this.prisma.content.findUnique({
+      where: { id: contentId },
+    });
 
-    return this.prisma.contentStatusHistory.create({
-      data: {
-        contentId,
-        status,
-        effectiveAt: new Date(),
-      },
+    if (!content || content.deletedAt) {
+      throw new NotFoundException('Content not found');
+    }
+
+    const status = dto.publish ? ContentStatus.PUBLISHED : ContentStatus.DRAFT;
+    const visibility = dto.publish ? Visibility.PUBLIC : content.visibility;
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.content.update({
+        where: { id: contentId },
+        data: { visibility },
+      });
+
+      return tx.contentStatusHistory.create({
+        data: {
+          contentId,
+          status,
+          effectiveAt: new Date(),
+        },
+      });
     });
   }
 
@@ -322,18 +399,23 @@ export class ContentService {
           select: { name: true },
         },
         seo: {
-          select: { metaTitle: true, metaDescription: true, canonicalUrl: true },
+          select: {
+            metaTitle: true,
+            metaDescription: true,
+            canonicalUrl: true,
+          },
         },
       },
     });
 
     // Filter by PUBLISHED status and map to expected frontend format
     return contents
-      .filter(content => 
-        content.status.length > 0 && 
-        content.status[0].status === ContentStatus.PUBLISHED
+      .filter(
+        (content) =>
+          content.status.length > 0 &&
+          content.status[0].status === ContentStatus.PUBLISHED,
       )
-      .map(content => ({
+      .map((content) => ({
         id: content.id,
         title: content.versions[0].title,
         summary: content.versions[0].summary,
@@ -375,7 +457,7 @@ export class ContentService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return contents.map(content => ({
+    return contents.map((content) => ({
       id: content.id,
       title: content.versions[0].title,
       summary: content.versions[0].summary,

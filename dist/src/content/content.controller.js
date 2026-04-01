@@ -31,6 +31,20 @@ let ContentController = class ContentController {
         const user = (0, get_auth_user_1.getAuthUser)(req);
         return this.contentService.createDraft(user.id, dto);
     }
+    getMyContent(req) {
+        const user = (0, get_auth_user_1.getAuthUser)(req);
+        return this.contentService.getUserContent(user.id);
+    }
+    getBySlug(slug) {
+        return this.contentService.getPublicContentBySlug(slug);
+    }
+    getPublicContent() {
+        return this.contentService.getPublicContent();
+    }
+    findOne(id, req) {
+        const user = (0, get_auth_user_1.getAuthUser)(req);
+        return this.contentService.findOne(id, user.id);
+    }
     updateContent(id, req, dto) {
         const user = (0, get_auth_user_1.getAuthUser)(req);
         return this.contentService.updateContent(id, user.id, dto);
@@ -45,16 +59,6 @@ let ContentController = class ContentController {
     setVisibility(id, dto) {
         return this.contentService.setVisibility(id, dto);
     }
-    getBySlug(slug) {
-        return this.contentService.getPublicContentBySlug(slug);
-    }
-    getPublicContent() {
-        return this.contentService.getPublicContent();
-    }
-    getMyContent(req) {
-        const user = (0, get_auth_user_1.getAuthUser)(req);
-        return this.contentService.getUserContent(user.id);
-    }
 };
 exports.ContentController = ContentController;
 __decorate([
@@ -66,6 +70,36 @@ __decorate([
     __metadata("design:paramtypes", [Object, create_content_dto_1.CreateContentDto]),
     __metadata("design:returntype", void 0)
 ], ContentController.prototype, "createDraft", null);
+__decorate([
+    (0, common_1.Get)('mine'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "getMyContent", null);
+__decorate([
+    (0, common_1.Get)('slug/:slug'),
+    __param(0, (0, common_1.Param)('slug')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "getBySlug", null);
+__decorate([
+    (0, common_1.Get)('public'),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "getPublicContent", null);
+__decorate([
+    (0, common_1.Get)(':id'),
+    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], ContentController.prototype, "findOne", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard, ownership_guard_1.OwnershipGuard),
@@ -103,27 +137,6 @@ __decorate([
     __metadata("design:paramtypes", [String, set_visibility_dto_1.SetVisibilityDto]),
     __metadata("design:returntype", void 0)
 ], ContentController.prototype, "setVisibility", null);
-__decorate([
-    (0, common_1.Get)('slug/:slug'),
-    __param(0, (0, common_1.Param)('slug')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], ContentController.prototype, "getBySlug", null);
-__decorate([
-    (0, common_1.Get)('public'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], ContentController.prototype, "getPublicContent", null);
-__decorate([
-    (0, common_1.Get)('mine'),
-    (0, common_1.UseGuards)(jwt_guard_1.JwtAuthGuard),
-    __param(0, (0, common_1.Req)()),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
-], ContentController.prototype, "getMyContent", null);
 exports.ContentController = ContentController = __decorate([
     (0, common_1.Controller)('content'),
     __metadata("design:paramtypes", [content_service_1.ContentService])

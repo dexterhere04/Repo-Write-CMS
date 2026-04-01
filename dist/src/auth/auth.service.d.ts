@@ -30,7 +30,11 @@ export declare class AuthService {
         username: string;
         email?: string;
         avatarUrl?: string;
+        accessToken?: string;
     }): Promise<{
+        isGithubUser: boolean;
         accessToken: string;
     }>;
+    getUserGithubToken(userId: string): Promise<string | null>;
+    isUserGithubUser(userId: string): Promise<boolean>;
 }

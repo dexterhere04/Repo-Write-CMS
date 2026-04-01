@@ -20,6 +20,7 @@ interface GitHubRequest {
     username: string;
     email?: string;
     avatarUrl?: string;
+    accessToken?: string;
   };
 }
 
@@ -51,7 +52,7 @@ export class AuthController {
   async githubCallback(@Req() req: GitHubRequest, @Res() res: Response) {
     try {
       const result = await this.authService.handleGithubLogin(req.user);
-      const redirectUrl = `${this.frontendUrl}/auth/callback?token=${encodeURIComponent(result.accessToken)}`;
+      const redirectUrl = `${this.frontendUrl}/auth/callback?token=${encodeURIComponent(result.accessToken)}&isGithubUser=true`;
       return res.redirect(redirectUrl);
     } catch (error) {
       const errorMessage =

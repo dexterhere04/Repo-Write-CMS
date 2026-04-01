@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { ContentModule } from './content/content.module';
+import { GithubModule } from './github/github.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -13,6 +14,7 @@ import { ContentModule } from './content/content.module';
     PrismaModule,
     AuthModule,
     ContentModule,
+    GithubModule,
   ],
   controllers: [AppController],
   providers: [AppService],

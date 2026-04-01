@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { ContentService } from './content.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -63,7 +62,7 @@ describe('ContentService', () => {
     }).compile();
 
     service = module.get<ContentService>(ContentService);
-    prismaService = module.get(PrismaService) as jest.Mocked<PrismaService>;
+    prismaService = module.get(PrismaService);
 
     jest.clearAllMocks();
   });

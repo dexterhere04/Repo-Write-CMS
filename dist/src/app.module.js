@@ -14,6 +14,7 @@ const app_service_1 = require("./app.service");
 const prisma_module_1 = require("./prisma/prisma.module");
 const auth_module_1 = require("./auth/auth.module");
 const content_module_1 = require("./content/content.module");
+const github_module_1 = require("./github/github.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -26,6 +27,7 @@ exports.AppModule = AppModule = __decorate([
             prisma_module_1.PrismaModule,
             auth_module_1.AuthModule,
             content_module_1.ContentModule,
+            github_module_1.GithubModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

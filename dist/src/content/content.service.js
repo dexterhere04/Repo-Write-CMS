@@ -161,14 +161,79 @@ let ContentService = class ContentService {
             return { success: true };
         });
     }
-    async setPublishState(contentId, dto) {
-        const status = dto.publish ? client_1.ContentStatus.PUBLISHED : client_1.ContentStatus.DRAFT;
-        return this.prisma.contentStatusHistory.create({
-            data: {
-                contentId,
-                status,
-                effectiveAt: new Date(),
+    async findOne(contentId, userId) {
+        const content = await this.prisma.content.findUnique({
+            where: { id: contentId },
+            include: {
+                slugs: {
+                    where: { isActive: true },
+                    select: { slug: true },
+                },
+                versions: {
+                    orderBy: { version: 'desc' },
+                    take: 1,
+                },
+                seo: true,
+                status: {
+                    orderBy: { effectiveAt: 'desc' },
+                    take: 1,
+                },
+                author: {
+                    select: { id: true, name: true, email: true },
+                },
             },
+        });
+        if (!content || content.deletedAt) {
+            throw new common_1.NotFoundException('Content not found');
+        }
+        if (content.authorId !== userId) {
+            throw new common_1.ForbiddenException('Not your content');
+        }
+        const latestVersion = content.versions[0];
+        const latestStatus = content.status[0];
+        const activeSlug = content.slugs[0];
+        return {
+            id: content.id,
+            title: latestVersion?.title ?? '',
+            summary: latestVersion?.summary,
+            body: latestVersion?.body ?? '',
+            slug: activeSlug?.slug ?? '',
+            type: content.type,
+            visibility: content.visibility,
+            status: latestStatus?.status ?? client_1.ContentStatus.DRAFT,
+            author: content.author,
+            createdAt: content.createdAt,
+            updatedAt: content.updatedAt,
+            seo: content.seo
+                ? {
+                    seoTitle: content.seo.metaTitle,
+                    seoDescription: content.seo.metaDescription,
+                    canonicalUrl: content.seo.canonicalUrl,
+                }
+                : null,
+        };
+    }
+    async setPublishState(contentId, dto) {
+        const content = await this.prisma.content.findUnique({
+            where: { id: contentId },
+        });
+        if (!content || content.deletedAt) {
+            throw new common_1.NotFoundException('Content not found');
+        }
+        const status = dto.publish ? client_1.ContentStatus.PUBLISHED : client_1.ContentStatus.DRAFT;
+        const visibility = dto.publish ? client_1.Visibility.PUBLIC : content.visibility;
+        return this.prisma.$transaction(async (tx) => {
+            await tx.content.update({
+                where: { id: contentId },
+                data: { visibility },
+            });
+            return tx.contentStatusHistory.create({
+                data: {
+                    contentId,
+                    status,
+                    effectiveAt: new Date(),
+                },
+            });
         });
     }
     async setVisibility(contentId, dto) {
@@ -251,14 +316,18 @@ let ContentService = class ContentService {
                     select: { name: true },
                 },
                 seo: {
-                    select: { metaTitle: true, metaDescription: true, canonicalUrl: true },
+                    select: {
+                        metaTitle: true,
+                        metaDescription: true,
+                        canonicalUrl: true,
+                    },
                 },
             },
         });
         return contents
-            .filter(content => content.status.length > 0 &&
+            .filter((content) => content.status.length > 0 &&
             content.status[0].status === client_1.ContentStatus.PUBLISHED)
-            .map(content => ({
+            .map((content) => ({
             id: content.id,
             title: content.versions[0].title,
             summary: content.versions[0].summary,
@@ -294,7 +363,7 @@ let ContentService = class ContentService {
             },
             orderBy: { createdAt: 'desc' },
         });
-        return contents.map(content => ({
+        return contents.map((content) => ({
             id: content.id,
             title: content.versions[0].title,
             summary: content.versions[0].summary,

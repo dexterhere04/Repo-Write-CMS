@@ -22,6 +22,28 @@ export declare class ContentService {
     updateContent(contentId: string, userId: string, dto: UpdateContentDto): Promise<{
         success: boolean;
     }>;
+    findOne(contentId: string, userId: string): Promise<{
+        id: string;
+        title: string;
+        summary: string | null;
+        body: string;
+        slug: string;
+        type: import("@prisma/client").$Enums.ContentType;
+        visibility: import("@prisma/client").$Enums.Visibility;
+        status: import("@prisma/client").$Enums.ContentStatus;
+        author: {
+            id: string;
+            email: string;
+            name: string | null;
+        };
+        createdAt: Date;
+        updatedAt: Date;
+        seo: {
+            seoTitle: string | null;
+            seoDescription: string | null;
+            canonicalUrl: string | null;
+        } | null;
+    }>;
     setPublishState(contentId: string, dto: PublishContentDto): Promise<{
         id: string;
         createdAt: Date;

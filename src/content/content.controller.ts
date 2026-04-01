@@ -21,13 +21,39 @@ import { getAuthUser } from '../auth/util/get-auth-user';
 
 @Controller('content')
 export class ContentController {
-  constructor(private readonly contentService: ContentService) {}
+  constructor(private readonly contentService: ContentService) {
+    console.log('ContentController loaded');
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard)
   createDraft(@Req() req: unknown, @Body() dto: CreateContentDto) {
     const user = getAuthUser(req);
     return this.contentService.createDraft(user.id, dto);
+  }
+
+  @Get('mine')
+  @UseGuards(JwtAuthGuard)
+  getMyContent(@Req() req: unknown) {
+    const user = getAuthUser(req);
+    return this.contentService.getUserContent(user.id);
+  }
+
+  @Get('slug/:slug')
+  getBySlug(@Param('slug') slug: string) {
+    return this.contentService.getPublicContentBySlug(slug);
+  }
+
+  @Get('public')
+  getPublicContent() {
+    return this.contentService.getPublicContent();
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  findOne(@Param('id') id: string, @Req() req: unknown) {
+    const user = getAuthUser(req);
+    return this.contentService.findOne(id, user.id);
   }
 
   @Patch(':id')
@@ -58,22 +84,5 @@ export class ContentController {
   @UseGuards(JwtAuthGuard, OwnershipGuard)
   setVisibility(@Param('id') id: string, @Body() dto: SetVisibilityDto) {
     return this.contentService.setVisibility(id, dto);
-  }
-
-  @Get('slug/:slug')
-  getBySlug(@Param('slug') slug: string) {
-    return this.contentService.getPublicContentBySlug(slug);
-  }
-
-  @Get('public')
-  getPublicContent() {
-    return this.contentService.getPublicContent();
-  }
-
-  @Get('mine')
-  @UseGuards(JwtAuthGuard)
-  getMyContent(@Req() req: unknown) {
-    const user = getAuthUser(req);
-    return this.contentService.getUserContent(user.id);
   }
 }

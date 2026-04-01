@@ -15,6 +15,62 @@ export declare class ContentController {
         visibility: import("@prisma/client").$Enums.Visibility;
         authorId: string;
     }>;
+    getMyContent(req: unknown): Promise<{
+        id: string;
+        title: string;
+        summary: string | null;
+        slug: string;
+        visibility: import("@prisma/client").$Enums.Visibility;
+        type: import("@prisma/client").$Enums.ContentType;
+        status: import("@prisma/client").$Enums.ContentStatus;
+        createdAt: Date;
+        updatedAt: Date;
+    }[]>;
+    getBySlug(slug: string): Promise<{
+        id: string;
+        type: import("@prisma/client").$Enums.ContentType;
+        title: string;
+        summary: string | null;
+        body: string;
+        slug: string;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    getPublicContent(): Promise<{
+        id: string;
+        title: string;
+        summary: string | null;
+        slug: string;
+        coverImageUrl: null;
+        author: {
+            name: string | null;
+        };
+        visibility: import("@prisma/client").$Enums.Visibility;
+        createdAt: Date;
+        tags: never[];
+    }[]>;
+    findOne(id: string, req: unknown): Promise<{
+        id: string;
+        title: string;
+        summary: string | null;
+        body: string;
+        slug: string;
+        type: import("@prisma/client").$Enums.ContentType;
+        visibility: import("@prisma/client").$Enums.Visibility;
+        status: import("@prisma/client").$Enums.ContentStatus;
+        author: {
+            id: string;
+            email: string;
+            name: string | null;
+        };
+        createdAt: Date;
+        updatedAt: Date;
+        seo: {
+            seoTitle: string | null;
+            seoDescription: string | null;
+            canonicalUrl: string | null;
+        } | null;
+    }>;
     updateContent(id: string, req: unknown, dto: UpdateContentDto): Promise<{
         success: boolean;
     }>;
@@ -43,38 +99,4 @@ export declare class ContentController {
         visibility: import("@prisma/client").$Enums.Visibility;
         authorId: string;
     }>;
-    getBySlug(slug: string): Promise<{
-        id: string;
-        type: import("@prisma/client").$Enums.ContentType;
-        title: string;
-        summary: string | null;
-        body: string;
-        slug: string;
-        createdAt: Date;
-        updatedAt: Date;
-    }>;
-    getPublicContent(): Promise<{
-        id: string;
-        title: string;
-        summary: string | null;
-        slug: string;
-        coverImageUrl: null;
-        author: {
-            name: string | null;
-        };
-        visibility: import("@prisma/client").$Enums.Visibility;
-        createdAt: Date;
-        tags: never[];
-    }[]>;
-    getMyContent(req: unknown): Promise<{
-        id: string;
-        title: string;
-        summary: string | null;
-        slug: string;
-        visibility: import("@prisma/client").$Enums.Visibility;
-        type: import("@prisma/client").$Enums.ContentType;
-        status: import("@prisma/client").$Enums.ContentStatus;
-        createdAt: Date;
-        updatedAt: Date;
-    }[]>;
 }

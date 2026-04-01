@@ -45,8 +45,8 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    prismaService = module.get(PrismaService) as jest.Mocked<PrismaService>;
-    jwtService = module.get(JwtService) as jest.Mocked<JwtService>;
+    prismaService = module.get(PrismaService);
+    jwtService = module.get(JwtService);
 
     // Reset mocks
     jest.clearAllMocks();
